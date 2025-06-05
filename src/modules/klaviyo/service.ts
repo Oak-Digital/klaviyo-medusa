@@ -1,5 +1,14 @@
 import { MedusaService } from "@medusajs/framework/utils"
-import { KlaviyoConfig as KlaviyoConfType, KlaviyoEvent, KlaviyoProfile, KlaviyoEventData, KlaviyoProfileAttributes } from "./types"
+import { 
+  KlaviyoConfig as KlaviyoConfType, 
+  KlaviyoEvent, 
+  KlaviyoProfile, 
+  KlaviyoEventData, 
+  KlaviyoProfileAttributes, 
+  KlaviyoNewsletterSubscription, 
+  KlaviyoSMSSubscription, 
+  KlaviyoSubscriptionResponse 
+} from "./types"
 import { KlaviyoConfig } from "./models"
 import { OrderDTO } from "@medusajs/framework/types"
 
@@ -149,6 +158,174 @@ class KlaviyoModuleService extends MedusaService({
         payment: orderData.transactions,
       }
     })
+  }
+
+  async subscribeToNewsletter(data: KlaviyoNewsletterSubscription): Promise<KlaviyoSubscriptionResponse> {
+    if (!await this.isEnabled()) {
+      throw new Error("Klaviyo is not enabled or API key is missing")
+    }
+
+    const profile: KlaviyoProfile = {
+      type: "profile",
+      attributes: {
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        external_id: data.external_id,
+        properties: {
+          ...data.properties,
+          email_marketing: {
+            can_receive_email_marketing: true,
+            consent: "subscribed",
+            consent_timestamp: new Date().toISOString()
+          }
+        }
+      }
+    }
+
+    return this.sendProfileToKlaviyo(profile)
+  }
+
+  async subscribeToSMS(data: KlaviyoSMSSubscription): Promise<KlaviyoSubscriptionResponse> {
+    if (!await this.isEnabled()) {
+      throw new Error("Klaviyo is not enabled or API key is missing")
+    }
+
+    const profile: KlaviyoProfile = {
+      type: "profile",
+      attributes: {
+        phone_number: data.phone_number,
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        external_id: data.external_id,
+        properties: {
+          ...data.properties,
+          sms_marketing: {
+            can_receive_sms_marketing: true,
+            consent: "subscribed",
+            consent_timestamp: new Date().toISOString()
+          }
+        }
+      }
+    }
+
+    return this.sendProfileToKlaviyo(profile)
+  }
+
+  async updateSubscription(email: string, updates: Partial<KlaviyoProfileAttributes>): Promise<KlaviyoSubscriptionResponse> {
+    if (!await this.isEnabled()) {
+      throw new Error("Klaviyo is not enabled or API key is missing")
+    }
+
+    const profile: KlaviyoProfile = {
+      type: "profile",
+      attributes: {
+        email,
+        ...updates
+      }
+    }
+
+    return this.sendProfileToKlaviyo(profile)
+  }
+
+  async unsubscribeFromNewsletter(email: string): Promise<KlaviyoSubscriptionResponse> {
+    if (!await this.isEnabled()) {
+      throw new Error("Klaviyo is not enabled or API key is missing")
+    }
+
+    const profile: KlaviyoProfile = {
+      type: "profile",
+      attributes: {
+        email,
+        meta: {
+          patch_properties: {
+            unset: "email_marketing.can_receive_email_marketing"
+          }
+        }
+      }
+    }
+
+    return this.sendProfileToKlaviyo(profile)
+  }
+
+  async unsubscribeFromSMS(phoneNumber: string): Promise<KlaviyoSubscriptionResponse> {
+    if (!await this.isEnabled()) {
+      throw new Error("Klaviyo is not enabled or API key is missing")
+    }
+
+    const profile: KlaviyoProfile = {
+      type: "profile",
+      attributes: {
+        phone_number: phoneNumber,
+        meta: {
+          patch_properties: {
+            unset: "sms_marketing.can_receive_sms_marketing"
+          }
+        }
+      }
+    }
+
+    return this.sendProfileToKlaviyo(profile)
+  }
+
+  private async sendProfileToKlaviyo(profile: KlaviyoProfile): Promise<KlaviyoSubscriptionResponse> {
+    // First try to create the profile
+    let response = await fetch("https://a.klaviyo.com/api/profiles/", {
+      method: "POST",
+      headers: {
+        "Authorization": `Klaviyo-API-Key ${this.getApiKey()}`,
+        "Content-Type": "application/json",
+        "revision": "2024-10-15"
+      },
+      body: JSON.stringify({ data: profile })
+    })
+
+    // If profile exists (409), try to update it instead
+    if (response.status === 409) {
+      const errorData = await response.json()
+      const existingProfileId = errorData?.errors?.[0]?.meta?.duplicate_profile_id
+      
+      if (existingProfileId) {
+        // Update existing profile using PATCH
+        response = await fetch(`https://a.klaviyo.com/api/profiles/${existingProfileId}/`, {
+          method: "PATCH",
+          headers: {
+            "Authorization": `Klaviyo-API-Key ${this.getApiKey()}`,
+            "Content-Type": "application/json",
+            "revision": "2024-10-15"
+          },
+          body: JSON.stringify({ data: { ...profile, id: existingProfileId } })
+        })
+      }
+    }
+
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(`Klaviyo API error: ${response.status} ${error}`)
+    }
+
+    // Handle empty response (204 No Content)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return { success: true, message: await response.text() }
+    }
+
+    const responseText = await response.text()
+    if (!responseText) {
+      return { success: true }
+    }
+
+    try {
+      const data = JSON.parse(responseText)
+      return { 
+        success: true, 
+        profile_id: data?.data?.id,
+        raw: data 
+      }
+    } catch (e) {
+      console.error('Failed to parse Klaviyo response:', responseText)
+      return { success: true, raw: responseText }
+    }
   }
 
   private async sendToKlaviyo(event: KlaviyoEvent): Promise<any> {

@@ -89,4 +89,28 @@ export interface KlaviyoApiResponse {
   }>
 }
 
+export interface KlaviyoSubscriptionRequest {
+  email?: string
+  phone_number?: string
+  first_name?: string
+  last_name?: string
+  external_id?: string
+  properties?: Record<string, any>
+}
+
+export interface KlaviyoNewsletterSubscription extends KlaviyoSubscriptionRequest {
+  email: string
+}
+
+export interface KlaviyoSMSSubscription extends KlaviyoSubscriptionRequest {
+  phone_number: string
+}
+
+export interface KlaviyoSubscriptionResponse {
+  success: boolean
+  profile_id?: string
+  message?: string
+  raw?: any
+}
+
 export type KlaviyoConfig = InferTypeOf<typeof KlaviyoConfig>
