@@ -3,42 +3,77 @@ import { KlaviyoConfig } from "../models"
 
 export interface KlaviyoEventData {
   event: string
-  customer_properties: Record<string, any>
+  customer_properties: KlaviyoProfileAttributes
   properties?: Record<string, any>
-  time?: number
+  time?: string
+  value?: number
+  value_currency?: string
+  unique_id?: string
 }
 
-export interface KlaviyoCustomer {
+export interface KlaviyoLocation {
+  address1?: string
+  address2?: string
+  city?: string
+  country?: string
+  latitude?: string
+  longitude?: string
+  region?: string
+  zip?: string
+  timezone?: string
+  ip?: string
+}
+
+export interface KlaviyoProfileAttributes {
   email?: string
   phone_number?: string
   external_id?: string
+  anonymous_id?: string
+  _kx?: string
   first_name?: string
   last_name?: string
-  [key: string]: any
+  organization?: string
+  locale?: string
+  title?: string
+  image?: string
+  location?: KlaviyoLocation
+  properties?: Record<string, any>
+  meta?: {
+    patch_properties?: {
+      append?: Record<string, any>
+      unappend?: Record<string, any>
+      unset?: string
+    }
+  }
 }
 
 export interface KlaviyoProfile {
   type: "profile"
-  attributes: KlaviyoCustomer
+  attributes: KlaviyoProfileAttributes
+  id?: string
+}
+
+export interface KlaviyoMetric {
+  type: "metric"
+  attributes: {
+    name: string
+    service?: string
+  }
 }
 
 export interface KlaviyoEvent {
   type: "event"
   attributes: {
+    properties: Record<string, any>
     metric: {
-      data: {
-        type: "metric"
-        attributes: {
-          name: string
-        }
-      }
+      data: KlaviyoMetric
     }
     profile: {
       data: KlaviyoProfile
     }
-    properties: Record<string, any>
     time?: string
     value?: number
+    value_currency?: string
     unique_id?: string
   }
 }
@@ -53,6 +88,5 @@ export interface KlaviyoApiResponse {
     detail: string
   }>
 }
-
 
 export type KlaviyoConfig = InferTypeOf<typeof KlaviyoConfig>

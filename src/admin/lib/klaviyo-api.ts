@@ -5,12 +5,14 @@ import { KlaviyoConfig } from "../../modules/klaviyo/types/index"
 
 
 export interface KlaviyoSettingsResponse {
+  id: string | null
   config: KlaviyoConfig
   has_api_key: boolean
   is_enabled: boolean
 }
 
 export interface UpdateKlaviyoConfigRequest {
+  id?: string | null
   public_key?: string | null
   server_prefix?: string
   is_enabled?: boolean
@@ -43,7 +45,7 @@ export const useUpdateKlaviyoSettings = () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(data)
+        body: data
       })
 
 

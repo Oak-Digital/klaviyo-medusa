@@ -16,12 +16,13 @@ export async function GET(
   res: MedusaResponse
 ) {
   const klaviyoService = req.scope.resolve(KLAVIYO_MODULE)
-  
+
   try {
     const config = await klaviyoService.getConfig()
     const isEnabled = await klaviyoService.isEnabled()
-    
+
     res.json({
+      id: config?.id || null,
       config: config || {
         public_key: null,
         server_prefix: "https://a.klaviyo.com",
@@ -46,7 +47,9 @@ export async function POST(
   res: MedusaResponse
 ) {
   const klaviyoService = req.scope.resolve(KLAVIYO_MODULE)
-  
+
+  console.log(req.body)
+
   try {
     const validatedData = updateConfigSchema.parse(req.body)
 

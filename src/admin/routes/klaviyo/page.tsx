@@ -7,18 +7,13 @@ import { useKlaviyoSettings, useUpdateKlaviyoSettings, UpdateKlaviyoConfigReques
 import QueryClientProvider from "../../lib/provider/QueryProvider"
 
 
-
-
-
-
-
-
 const KlaviyoSettings = () => {
   const { data: klaviyoSettings, isLoading } = useKlaviyoSettings()
   const updateKlaviyoSettings = useUpdateKlaviyoSettings()
-  
+
   const { register, handleSubmit, reset, watch, setValue } = useForm<UpdateKlaviyoConfigRequest>({
     defaultValues: {
+      id: klaviyoSettings?.id || "",
       public_key: "",
       server_prefix: "https://a.klaviyo.com",
       is_enabled: false,
@@ -28,9 +23,12 @@ const KlaviyoSettings = () => {
     }
   })
 
+  console.log("Klaviyo Settings:", klaviyoSettings)
+
   React.useEffect(() => {
     if (klaviyoSettings?.config) {
       reset({
+        id: klaviyoSettings.id || "",
         public_key: klaviyoSettings.config.public_key || "",
         server_prefix: klaviyoSettings.config.server_prefix || "https://a.klaviyo.com",
         is_enabled: klaviyoSettings.config.is_enabled || false,
@@ -66,6 +64,7 @@ const KlaviyoSettings = () => {
       <div className="px-6 py-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
+            <Input type="hidden" {...register("id")} />
             <div>
               <Label htmlFor="public_key">Public Key</Label>
               <Input
@@ -74,7 +73,7 @@ const KlaviyoSettings = () => {
                 placeholder="Enter your Klaviyo public key"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="server_prefix">Server Prefix</Label>
               <Input
@@ -95,7 +94,7 @@ const KlaviyoSettings = () => {
 
             <div className="space-y-3">
               <Text size="base" weight="plus">Event Tracking</Text>
-              
+
               <div className="flex items-center space-x-2">
                 <Switch
                   id="track_order_events"
@@ -138,7 +137,7 @@ const KlaviyoSettings = () => {
                 </>
               )}
             </div>
-            
+
             <Button type="submit" disabled={updateKlaviyoSettings.isPending}>
               {updateKlaviyoSettings.isPending ? "Saving..." : "Save Settings"}
             </Button>
@@ -158,7 +157,6 @@ const KlaviyoSettings = () => {
 
 
 const KlaviyoPage = () => {
-
   return (
     <QueryClientProvider>
       <KlaviyoSettings />
@@ -166,9 +164,10 @@ const KlaviyoPage = () => {
   )
 }
 
+export default KlaviyoPage
+
 export const config = defineRouteConfig({
   label: "Klaviyo",
   icon: ChatBubbleLeftRight,
 })
 
-export default KlaviyoPage
