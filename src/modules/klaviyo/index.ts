@@ -8,5 +8,4 @@ export default Module(KLAVIYO_MODULE, {
 })
 
 export * from "./models"
-export * from "./types"
 export { default as KlaviyoModuleService } from "./service"
