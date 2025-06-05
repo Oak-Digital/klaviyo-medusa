@@ -1,0 +1,1 @@
+export { default as KlaviyoConfig } from "./klaviyo-config"
