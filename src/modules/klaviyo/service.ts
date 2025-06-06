@@ -7,10 +7,13 @@ import {
   KlaviyoProfileAttributes, 
   KlaviyoNewsletterSubscription, 
   KlaviyoSMSSubscription, 
-  KlaviyoSubscriptionResponse 
+  KlaviyoSubscriptionResponse
 } from "./types"
 import { KlaviyoConfig } from "./models"
 import { OrderDTO } from "@medusajs/framework/types"
+
+// Define a specific type for the Klaviyo API revision header
+const KLAVIYO_API_REVISION = "2024-07-15" as const;
 
 class KlaviyoModuleService extends MedusaService({
   KlaviyoConfig,
@@ -165,6 +168,9 @@ class KlaviyoModuleService extends MedusaService({
       throw new Error("Klaviyo is not enabled or API key is missing")
     }
 
+    const config = await this.getConfig()
+    const newsletterListId = config?.newsletter_list_id
+
     const profile: KlaviyoProfile = {
       type: "profile",
       attributes: {
@@ -183,7 +189,21 @@ class KlaviyoModuleService extends MedusaService({
       }
     }
 
-    return this.sendProfileToKlaviyo(profile)
+    const profileResponse = await this.sendProfileToKlaviyo(profile)
+
+    if (profileResponse.success && profileResponse.profile_id && newsletterListId) {
+      try {
+        await this._addProfileToList(profileResponse.profile_id, newsletterListId)
+      } catch (listError) {
+        console.error(`Failed to add profile ${profileResponse.profile_id} to list ${newsletterListId}:`, listError)
+        return { 
+          ...profileResponse, 
+          message: (profileResponse.message || "") + ` Profile created/updated, but failed to add to list ${newsletterListId}.` 
+        }
+      }
+    }
+
+    return profileResponse
   }
 
   async subscribeToSMS(data: KlaviyoSMSSubscription): Promise<KlaviyoSubscriptionResponse> {
@@ -269,14 +289,65 @@ class KlaviyoModuleService extends MedusaService({
     return this.sendProfileToKlaviyo(profile)
   }
 
+  private async _addProfileToList(profileId: string, listId: string): Promise<void> {
+    const apiKey = this.getApiKey()
+    if (!apiKey) {
+      // This case should ideally be prevented by isEnabled checks earlier,
+      // but as a safeguard:
+      console.warn("Klaviyo API key is missing when trying to add profile to list.")
+      return
+    }
+
+    const payload = {
+      data: [
+        {
+          type: "profile",
+          id: profileId,
+        },
+      ],
+    }
+
+    const config = await this.getConfig()
+    const serverPrefix = config?.server_prefix || "https://a.klaviyo.com"
+    
+    const response = await fetch(`${serverPrefix}/api/lists/${listId}/relationships/profiles/`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Klaviyo-API-Key ${apiKey}`,
+        "Content-Type": "application/json",
+        "revision": KLAVIYO_API_REVISION,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      // Log detailed error for server-side inspection
+      console.error(`Klaviyo API error adding profile ${profileId} to list ${listId}: ${response.status} ${errorText}`, {
+        responseStatus: response.status,
+        responseText: errorText,
+      })
+      // Throw a more generic error or handle as per application's error strategy
+      throw new Error(`Klaviyo API error (${response.status}) adding profile to list.`)
+    }
+    // Success (202 Accepted or 204 No Content are common for this type of request)
+    // Consume body if any, to prevent resource leaks, though often there isn't one for 204.
+    if (response.body) {
+      await response.text();
+    }
+  }
+
   private async sendProfileToKlaviyo(profile: KlaviyoProfile): Promise<KlaviyoSubscriptionResponse> {
+    const config = await this.getConfig()
+    const serverPrefix = config?.server_prefix || "https://a.klaviyo.com"
+
     // First try to create the profile
-    let response = await fetch("https://a.klaviyo.com/api/profiles/", {
+    let response = await fetch(`${serverPrefix}/api/profiles/`, {
       method: "POST",
       headers: {
         "Authorization": `Klaviyo-API-Key ${this.getApiKey()}`,
         "Content-Type": "application/json",
-        "revision": "2024-10-15"
+        "revision": KLAVIYO_API_REVISION
       },
       body: JSON.stringify({ data: profile })
     })
@@ -288,14 +359,14 @@ class KlaviyoModuleService extends MedusaService({
       
       if (existingProfileId) {
         // Update existing profile using PATCH
-        response = await fetch(`https://a.klaviyo.com/api/profiles/${existingProfileId}/`, {
+        response = await fetch(`${serverPrefix}/api/profiles/${existingProfileId}/`, {
           method: "PATCH",
           headers: {
             "Authorization": `Klaviyo-API-Key ${this.getApiKey()}`,
             "Content-Type": "application/json",
-            "revision": "2024-10-15"
+            "revision": KLAVIYO_API_REVISION
           },
-          body: JSON.stringify({ data: { ...profile, id: existingProfileId } })
+          body: JSON.stringify({ data: { type: "profile", id: existingProfileId, attributes: profile.attributes } })
         })
       }
     }
@@ -329,12 +400,15 @@ class KlaviyoModuleService extends MedusaService({
   }
 
   private async sendToKlaviyo(event: KlaviyoEvent): Promise<any> {
-    const response = await fetch("https://a.klaviyo.com/api/events/", {
+    const config = await this.getConfig()
+    const serverPrefix = config?.server_prefix || "https://a.klaviyo.com"
+
+    const response = await fetch(`${serverPrefix}/api/events/`, {
       method: "POST",
       headers: {
         "Authorization": `Klaviyo-API-Key ${this.getApiKey()}`,
         "Content-Type": "application/json",
-        "revision": "2024-10-15"
+        "revision": KLAVIYO_API_REVISION
       },
       body: JSON.stringify({ data: event })
     })

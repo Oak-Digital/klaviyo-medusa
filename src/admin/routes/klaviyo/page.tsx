@@ -19,7 +19,8 @@ const KlaviyoSettings = () => {
       is_enabled: false,
       track_order_events: true,
       track_customer_events: true,
-      track_product_events: false
+      track_product_events: false,
+      newsletter_list_id: ""
     }
   })
 
@@ -34,12 +35,15 @@ const KlaviyoSettings = () => {
         is_enabled: klaviyoSettings.config.is_enabled || false,
         track_order_events: klaviyoSettings.config.track_order_events ?? true,
         track_customer_events: klaviyoSettings.config.track_customer_events ?? true,
-        track_product_events: klaviyoSettings.config.track_product_events ?? false
+        track_product_events: klaviyoSettings.config.track_product_events ?? false,
+        newsletter_list_id: klaviyoSettings.config.newsletter_list_id || ""
       })
     }
   }, [klaviyoSettings, reset])
 
   const onSubmit = (data: UpdateKlaviyoConfigRequest) => {
+    // The 'id' is handled by the backend service; not typically part of the form submission data for this schema.
+    // The service's updateConfig method will find the existing config or create a new one.
     updateKlaviyoSettings.mutate(data)
   }
 
@@ -80,6 +84,15 @@ const KlaviyoSettings = () => {
                 id="server_prefix"
                 {...register("server_prefix")}
                 placeholder="https://a.klaviyo.com"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="newsletter_list_id">Newsletter List ID</Label>
+              <Input
+                id="newsletter_list_id"
+                {...register("newsletter_list_id")}
+                placeholder="Enter Klaviyo Newsletter List ID (e.g., XxXxXX)"
               />
             </div>
 

@@ -8,6 +8,7 @@ const KlaviyoConfig = model.define("klaviyo_config", {
   track_order_events: model.boolean().default(true),
   track_customer_events: model.boolean().default(true),
   track_product_events: model.boolean().default(false),
+  newsletter_list_id: model.text().nullable(),
 })
 
 export default KlaviyoConfig

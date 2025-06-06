@@ -8,7 +8,8 @@ const updateConfigSchema = z.object({
   is_enabled: z.boolean().optional(),
   track_order_events: z.boolean().optional(),
   track_customer_events: z.boolean().optional(),
-  track_product_events: z.boolean().optional()
+  track_product_events: z.boolean().optional(),
+  newsletter_list_id: z.string().nullable().optional()
 })
 
 export async function GET(
@@ -29,7 +30,8 @@ export async function GET(
         is_enabled: false,
         track_order_events: true,
         track_customer_events: true,
-        track_product_events: false
+        track_product_events: false,
+        newsletter_list_id: null
       },
       has_api_key: !!klaviyoService.getApiKey(),
       is_enabled: isEnabled
