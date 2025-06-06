@@ -68,7 +68,7 @@ const KlaviyoSettings = () => {
       <div className="px-6 py-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
-            <Input type="hidden" {...register("id")} />
+            <Input type="hidden" id="id" {...register("id")} />
             <div>
               <Label htmlFor="public_key">Public Key</Label>
               <Input

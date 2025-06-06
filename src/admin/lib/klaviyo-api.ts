@@ -52,7 +52,8 @@ export const useUpdateKlaviyoSettings = () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(data) // Ensure the body is stringified
+        // we dont stringify it because the sdk.client.fetch already does that
+        body: data // Ensure the body is stringified
       })
 
 

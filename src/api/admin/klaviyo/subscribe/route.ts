@@ -11,6 +11,8 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     last_name: "Heide",
   })
 
+  console.log("result", result);
+
   return res.status(200).json({
     result: result,
   });
