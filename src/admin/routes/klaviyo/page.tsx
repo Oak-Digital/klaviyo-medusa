@@ -24,7 +24,6 @@ const KlaviyoSettings = () => {
     }
   })
 
-  console.log("Klaviyo Settings:", klaviyoSettings)
 
   React.useEffect(() => {
     if (klaviyoSettings?.config) {

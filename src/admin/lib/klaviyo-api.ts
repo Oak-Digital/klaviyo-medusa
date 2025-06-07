@@ -59,7 +59,7 @@ export const useUpdateKlaviyoSettings = () => {
 
       return response
     },
-    onSuccess: (responseData) => { // Can use responseData to update cache if needed
+    onSuccess: () => { // Can use responseData to update cache if needed
       queryClient.invalidateQueries({ queryKey: KLAVIYO_QUERY_KEY })
       // Example: Update cache directly if desired
       // queryClient.setQueryData(KLAVIYO_QUERY_KEY, responseData)

@@ -100,6 +100,7 @@ export interface KlaviyoSubscriptionRequest {
 
 export interface KlaviyoNewsletterSubscription extends KlaviyoSubscriptionRequest {
   email: string
+  list_id?: string
 }
 
 export interface KlaviyoSMSSubscription extends KlaviyoSubscriptionRequest {

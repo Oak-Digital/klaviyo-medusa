@@ -67,7 +67,7 @@ class KlaviyoModuleService extends MedusaService({
 
   private async makeKlaviyoRequest(endpoint: string, method: string, body?: any): Promise<Response> {
     const serverPrefix = await this.getServerPrefix()
-    
+
     return fetch(`${serverPrefix}${endpoint}`, {
       method,
       headers: this.getHeaders(),
@@ -131,7 +131,7 @@ class KlaviyoModuleService extends MedusaService({
       email: orderData.email,
       first_name: orderData.shipping_address?.first_name,
       last_name: orderData.shipping_address?.last_name,
-      phone_number: "+45" + orderData.shipping_address?.phone,
+      phone_number: orderData.shipping_address?.phone,
     }
   }
 
@@ -222,7 +222,7 @@ class KlaviyoModuleService extends MedusaService({
     }
 
     const config = await this.getConfig()
-    const newsletterListId = config?.newsletter_list_id
+    const newsletterListId = data.list_id || config?.newsletter_list_id
 
     const profile = this.buildProfilePayload({
       email: data.email,
@@ -386,7 +386,7 @@ class KlaviyoModuleService extends MedusaService({
     }
 
     const responseData = await this.handleKlaviyoResponse(response)
-    
+
     return {
       success: true,
       profile_id: responseData?.data?.id,

@@ -1,7 +1,7 @@
 import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
 import KlaviyoModuleService from "../modules/klaviyo/service"
 import { KLAVIYO_MODULE } from "../modules/klaviyo"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { OrderDTO } from "@medusajs/framework/types"
 
 export default async function orderEventsHandler({
@@ -9,32 +9,25 @@ export default async function orderEventsHandler({
   container,
 }: SubscriberArgs<{ id: string }>) {
   const klaviyoService: KlaviyoModuleService = container.resolve(KLAVIYO_MODULE)
-  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const orderService = container.resolve(Modules.ORDER)
 
   const order_id = data.id;
 
-  const { data: order } = await query.graph({
-    entity: 'order',
-    fields: [
+  const order = await orderService.retrieveOrder(order_id, {
+    relations: [
       '*',
       'items.*',
       'shipping_address.*',
       'billing_address.*',
       'fulfillments.*',
-      'fulfillments.created_at',
-      'fulfillments.packed_at',
-      'fulfillments.delivered_at',
-      'fulfillments.updated_at',
-      'fulfillments.provider_id',
-      'payment_collections',
-      'payment_collections.id',
-      'payment_collections.amount',
-      'payment_collections.status',
+      'payment_collections.*',
+      'total',
+      'subtotal',
+      'summary.*',
     ],
-    filters: {
-      id: order_id,
-    },
-  }) as unknown as { data: OrderDTO }
+  });
+
+  console.log(`Processing Klaviyo event: ${name} for order ID: ${order_id}`)
 
   try {
     switch (name) {
@@ -42,7 +35,6 @@ export default async function orderEventsHandler({
         await klaviyoService.trackOrderPlaced(order)
         break
       case "order.completed":
-      case "shipment.created":
       case "order.canceled":
         await klaviyoService.trackOrderFulfilled(order)
         break
@@ -53,5 +45,5 @@ export default async function orderEventsHandler({
 }
 
 export const config: SubscriberConfig = {
-  event: ["order.placed", "order.completed", "order.canceled", "shipment.created"],
+  event: ["order.placed", "order.completed", "order.canceled"],
 }
