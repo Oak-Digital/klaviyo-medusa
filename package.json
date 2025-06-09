@@ -1,6 +1,6 @@
 {
   "name": "@oak-digital/klaviyo",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A starter for Medusa plugins.",
   "author": "Medusa (https://medusajs.com)",
   "license": "MIT",
@@ -12,11 +12,7 @@
     "./workflows": "./.medusa/server/src/workflows/index.js",
     "./.medusa/server/src/modules/*": "./.medusa/server/src/modules/*/index.js",
     "./modules/*": "./.medusa/server/src/modules/*/index.js",
-    "./admin": {
-      "import": "./.medusa/server/src/admin/index.mjs",
-      "require": "./.medusa/server/src/admin/index.js",
-      "default": "./.medusa/server/src/admin/index.js"
-    },
+    "./admin": "./.medusa/server/src/admin/index.js",
     "./providers/*": "./.medusa/server/src/providers/*/index.js",
     "./*": "./.medusa/server/src/*.js"
   },
@@ -80,6 +76,7 @@
   },
   "packageManager": "yarn@4.7.0+sha512.5a0afa1d4c1d844b3447ee3319633797bcd6385d9a44be07993ae52ff4facabccafb4af5dcd1c2f9a94ac113e5e9ff56f6130431905884414229e284e37bb7c9",
   "dependencies": {
+    "bumpp": "^10.1.1",
     "klaviyo-api": "^18.0.0",
     "react-hook-form": "^7.57.0",
     "zod": "^3.25.51"

@@ -116,7 +116,7 @@ const KlaviyoSettings = () => {
                 <Label htmlFor="track_order_events">Track Order Events</Label>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 hidden">
                 <Switch
                   id="track_customer_events"
                   checked={watch("track_customer_events")}
@@ -125,7 +125,7 @@ const KlaviyoSettings = () => {
                 <Label htmlFor="track_customer_events">Track Customer Events</Label>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 hidden">
                 <Switch
                   id="track_product_events"
                   checked={watch("track_product_events")}
