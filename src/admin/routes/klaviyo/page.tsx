@@ -42,7 +42,7 @@ const KlaviyoSettings = () => {
 
   const onSubmit = (data: UpdateKlaviyoConfigRequest) => {
     // The 'id' is handled by the backend service; not typically part of the form submission data for this schema.
-    // The service's updateConfig method will find the existing config or create a new one.
+    // The service's updateConfig method will find the existing config or create a new one..
     updateKlaviyoSettings.mutate(data)
   }
 
